@@ -69,6 +69,7 @@ backend/
   app.py            # FastAPI app: /health, /api/search, /api/ask (LLM stub)
   db.py             # PG connection + simple query helpers
   init_db.py        # Creates DB if missing, applies schema, seeds data
+  llm.py            # Minimal OpenAI integration
   requirements.txt  # Python deps
   data/
     schema.sql               # Tables, indexes, triggers for FTS + category/date index
@@ -86,7 +87,7 @@ backend/
 
 This section summarizes the search performance of the `/api/search` endpoint **with** and **without** indexes, and explains each index used and why it helps.
 
-The API itself logs and returns timing metrics (`db_ms`, `total_ms`) for each search query. See the FastAPI handler in `app.py` for details:contentReference[oaicite:0]{index=0}. The database schema applied depends on the `USE_INDEXES` flag in `.env`:contentReference[oaicite:1]{index=1}, as handled in `init_db.py`:contentReference[oaicite:2]{index=2}.
+The API itself logs and returns timing metrics (`db_ms`, `total_ms`) for each search query. See the FastAPI handler in `app.py` for details. The database schema applied depends on the `USE_INDEXES` flag in `.env`, as handled in `init_db.py`.
 
 ### How the benchmark was run
 

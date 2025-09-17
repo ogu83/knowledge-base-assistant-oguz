@@ -133,7 +133,6 @@ def generate_answer(question: str, raw_contexts: Iterable[dict]) -> str:
     if total_words > WORD_BUDGET:
         trimmed = summarize_long_context(question, trimmed)
 
-
     logger.info("Using %d context articles (~%d words) for question %r",
             len(trimmed), sum(_approx_words(c.body) for c in trimmed), question)
     
