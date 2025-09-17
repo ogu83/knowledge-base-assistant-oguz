@@ -219,7 +219,44 @@ CREATE INDEX IF NOT EXISTS idx_articles_content_trgm
 - Trigram indexes make these substring searches fast (otherwise they require sequential scans).
 - Preserves recall identical to the baseline but with large performance gains.
 
+## LLM Integration
+
+This project uses a minimal OpenAI integration in `backend/llm.py` (no heavy frameworks). It:
+- Loads your API key from `.env` (at the repo root) and uses the `openai` client.
+- Builds a compact prompt from selected article chunks.
+- Budgets context size using a simple word-count proxy and summarizes if needed.
+- Returns a concise answer strictly from the provided context.
+
+### Configure your `.env`
+Copy `.env.example` to `.env` at the **repo root** and set:
+
+```
+OPENAI_MODEL=gpt-3.5-turbo
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+> Tip: You can switch to another compatible model by changing `OPENAI_MODEL`. Keep the same format.
+
+### Example: Ask the LLM
+
+**HTTP POST**  
+`http://localhost:8000/api/ask`
+
+**Request body**
+```json
+{
+  "context_ids": [2],
+  "question": "Can I find code snippets about PostgreSQL Indexes?"
+}
+```
+
+**Response**
+```json
+{
+  "answer": "Yes, you can find code snippets about PostgreSQL Indexes in the article \"Demystifying PostgreSQL Indexes.\"",
+  "used_article_ids": [2]
+}
+```
+
 ## Next Steps
-- Add `llm.py` with OpenAI integration and token budgeting.
-- Add README notes for indexing performance and query plans.
 - Optionally add `docker-compose.yml` for Postgres + API.

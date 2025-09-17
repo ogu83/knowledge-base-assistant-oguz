@@ -6,6 +6,7 @@ from typing import List, Optional
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import time
+from llm import generate_answer
 
 from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parent.parent
@@ -40,15 +41,6 @@ class AskRequest(BaseModel):
 def health():
     return {"status": "ok"}
 
-def build_prefix_tsquery(user_text: str) -> str:
-    # very simple sanitizer: keep letters, digits, and spaces; split into terms
-    import re
-    terms = [t for t in re.split(r"\s+", re.sub(r"[^A-Za-z0-9\s]+", " ", user_text).strip()) if t]
-    if not terms:
-        return ""  # caller should handle empty
-    # join terms with AND and prefix operator :*
-    return " & ".join(f"{t}:*" for t in terms)
-
 @app.get("/api/search")
 def search(
     q: str = Query(..., alias="query"),
@@ -60,7 +52,7 @@ def search(
     if USE_INDEXES:
         # With indexes, we can use full-text search efficiently
         # Full-text search across title+content using ts_rank
-        fts_q = q  # you can keep build_prefix_tsquery if you prefer
+        fts_q = q  
         sql = """
         SELECT
             a.id,
@@ -139,24 +131,23 @@ def search(
 
 @app.post("/api/ask")
 def ask(req: AskRequest):
-    # Retrieve contexts (keep under ~1000-1500 words for now; LLM integration comes next)
     if not req.context_ids:
         raise HTTPException(status_code=400, detail="context_ids is required")
-    sql_ctx = '''
+    
+    sql_ctx = """
     SELECT id, title, content
     FROM articles
     WHERE id = ANY(%s)
     ORDER BY publish_date DESC
-    '''
+    """
     rows = query(sql_ctx, (req.context_ids,))
-    # Concatenate a trimmed context (naive token approx via words)
-    def trim(text, max_words=500):
-        words = text.split()
-        return " ".join(words[:max_words])
-    context = []
-    for r in rows:
-        context.append(f"# {r['title']}\n\n" + trim(r["content"], 500))
-    combined = "\n\n---\n\n".join(context)
-    # TODO: Replace this stub with actual LLM call (OpenAI) in llm.py
-    answer = f"(LLM stub) Would answer the question using {len(combined.split())} words of context."
-    return {"answer": answer, "used_article_ids": [r["id"] for r in rows]}
+
+    try:
+        answer = generate_answer(req.question, rows)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {
+        "answer": answer,
+        "used_article_ids": [r["id"] for r in rows]
+    }
