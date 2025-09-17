@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Knowledge Base Assistant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Vue 3 (CDN) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app" class="wrap">
+      <div class="panel">
+        <h1>Knowledge Base Assistant</h1>
+        <div class="form">
+          <input
+            v-model="query"
+            type="text"
+            placeholder="Search articles (e.g., PostgreSQL indexes, SQL joins)"
+          />
+          <select v-model="category">
+            <option value="">All categories</option>
+            <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
+          </select>
+          <button @click="doSearch" :disabled="loadingSearch">
+            <span v-if="loadingSearch" class="spinner"></span>
+            <span v-else>Search</span>
+          </button>
+        </div>
+
+        <div class="results" v-if="results.length">
+          <div class="card" v-for="r in results" :key="r.id">
+            <div class="title">{{ r.title }}</div>
+            <div class="meta">
+              {{ r.author_name }} • {{ r.category_name }} • {{ r.publish_date }}
+            </div>
+            <div class="excerpt">{{ r.excerpt }}...</div>
+            <div class="tags">
+              <span v-for="t in tagList(r.tags)" :key="t" class="tag"
+                >{{ t }}</span
+              >
+            </div>
+            <div class="askbox">
+              <input
+                v-model="r.ask"
+                type="text"
+                :placeholder="`Ask about: ${r.title}`"
+              />
+              <button @click="askAI(r)" :disabled="r.loadingAsk">
+                <span v-if="r.loadingAsk" class="spinner"></span>
+                <span v-else>Ask AI</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="!loadingSearch && !error && queryTouched" class="empty">
+          No results found. Try another query or remove the category filter.
+        </div>
+
+        <div v-if="error" class="error">{{ error }}</div>
+
+        <div class="chat" v-if="messages.length">
+          <div class="msg user" v-for="(m,i) in messages" :key="i*2">
+            <div class="bubble">
+              <div class="muted">You asked</div>
+              <div>{{ m.question }}</div>
+            </div>
+          </div>
+          <div class="msg ai" v-for="(m,i) in messages" :key="i*2+1">
+            <div class="bubble">
+              <div class="muted">Assistant</div>
+              <div style="white-space: pre-wrap">{{ m.answer }}</div>
+              <div class="muted" style="margin-top: 6px; font-size: 12px">
+                Sources: IDs {{ m.used_article_ids.join(', ') }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const { createApp, reactive, toRefs } = Vue;
+
+      createApp({
+        setup() {
+          // --- Config ---
+          const state = reactive({
+            baseUrl: "http://localhost:8000", // adjust if backend runs elsewhere
+            query: "",
+            category: "",
+            categories: ["Python", "Databases", "Frontend", "DevOps", "LLMs"], // seed-aligned
+            results: [],
+            loadingSearch: false,
+            queryTouched: false,
+            error: "",
+            messages: [],
+          });
+
+          const tagList = (csv) =>
+            (csv || "")
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
+
+          async function doSearch() {
+            state.error = "";
+            state.queryTouched = true;
+            state.loadingSearch = true;
+            state.results = [];
+            try {
+              const params = new URLSearchParams({ query: state.query });
+              if (state.category) params.set("category", state.category);
+              const res = await fetch(
+                `${state.baseUrl}/api/search?` + params.toString()
+              );
+              if (!res.ok) throw new Error(`Search failed (${res.status})`);
+              const json = await res.json();
+              // augment results with local fields for ask UX
+              state.results = (json.results || []).map((r) => ({
+                ...r,
+                ask: "",
+                loadingAsk: false,
+              }));
+            } catch (e) {
+              state.error = e.message || "Search error.";
+            } finally {
+              state.loadingSearch = false;
+            }
+          }
+
+          async function askAI(result) {
+            result.loadingAsk = true;
+            state.error = "";
+            try {
+              // Use the per-card question if provided; otherwise a default
+              const question =
+                result.ask && result.ask.trim()
+                  ? result.ask.trim()
+                  : `Tell me more about "${result.title}"`;
+              const payload = {
+                context_ids: [result.id],
+                question,
+              };
+              const res = await fetch(`${state.baseUrl}/api/ask`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail || `Ask failed (${res.status})`);
+              }
+              const json = await res.json();
+              state.messages.push({
+                question,
+                answer: json.answer,
+                used_article_ids: json.used_article_ids || [],
+              });
+            } catch (e) {
+              state.error = e.message || "Ask error.";
+            } finally {
+              result.loadingAsk = false;
+            }
+          }
+
+          return { ...toRefs(state), doSearch, askAI, tagList };
+        },
+      }).mount("#app");
+    </script>
+  </body>
+</html>

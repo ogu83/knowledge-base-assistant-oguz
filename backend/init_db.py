@@ -16,9 +16,9 @@ Relies on environment variables (or the defaults set in db.py):
 from __future__ import annotations
 
 import os
-import random
 import datetime
 from pathlib import Path
+import random as _rnd
 
 import psycopg2
 from psycopg2 import sql
@@ -96,8 +96,6 @@ def _conn(dbname: str):
 
 def ensure_database():
     """Ensure PG_DBNAME exists; create it if missing by connecting to 'postgres'."""
-    import psycopg2
-
     try:
         with _conn(PG_DBNAME):
             print(f"✔ Database '{PG_DBNAME}' is reachable.")
@@ -113,7 +111,6 @@ def ensure_database():
             cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (PG_DBNAME,))
             exists = cur.fetchone() is not None
             if not exists:
-                from psycopg2 import sql
                 cur.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(PG_DBNAME)))
                 print(f"✔ Created database '{PG_DBNAME}'.")
             else:
@@ -181,7 +178,7 @@ def apply_schema_and_seed():
             article_ids = [row[0] for row in cur.fetchall()]
             at_rows = []
             tag_ids = list(tag_map.values())
-            import random as _rnd
+
             for aid in article_ids:
                 for tid in _rnd.sample(tag_ids, k=_rnd.randint(2, 5)):
                     at_rows.append((aid, tid))
