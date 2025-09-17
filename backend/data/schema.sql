@@ -57,3 +57,13 @@ FOR EACH ROW EXECUTE FUNCTION articles_tsv_update();
 
 -- Backfill existing rows (force trigger to run)
 UPDATE articles SET title = title;
+
+-- Enable trigram search (once per DB)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Trigram indexes to accelerate substring search
+CREATE INDEX IF NOT EXISTS idx_articles_title_trgm
+  ON articles USING GIN (title gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_articles_content_trgm
+  ON articles USING GIN (content gin_trgm_ops);

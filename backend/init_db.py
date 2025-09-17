@@ -23,13 +23,23 @@ from pathlib import Path
 import psycopg2
 from psycopg2 import sql
 from psycopg2.extras import execute_values
+from dotenv import load_dotenv
+
+ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(ROOT / ".env")
 
 # Read connection defaults directly from db.py so env overrides still work there
-from db import PG_HOST, PG_PORT, PG_USER, PG_PASSWORD, PG_DBNAME
+from db import PG_HOST, PG_PORT, PG_USER, PG_PASSWORD, PG_DBNAME, USE_INDEXES
 
 # Resolve schema path relative to this file (backend/data/schema.sql)
 HERE = Path(__file__).resolve().parent
-SCHEMA_PATH = HERE / "data" / "schema.sql"
+if not USE_INDEXES:
+    print("ℹ USE_INDEXES is false; skipping index creation in schema.")
+    SHEMA_FILE = "schema_no_index.sql"
+else:
+    print("ℹ USE_INDEXES is true; index creation will be applied in schema.")
+    SHEMA_FILE = "schema.sql"
+SCHEMA_PATH = HERE / "data" / SHEMA_FILE
 
 authors_seed = [
     ("Guido Van Prime", "Engineer and writer focusing on Python internals."),
