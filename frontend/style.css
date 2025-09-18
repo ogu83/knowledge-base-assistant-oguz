@@ -10,44 +10,26 @@
   --tag: #0b172a;
   --bubble: #111c2f;
 }
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 body {
   margin: 0;
   background: linear-gradient(90deg, #0b1220, #0f172a);
   color: var(--text);
   font-family: Inter, system-ui, Arial, sans-serif;
 }
-.wrap {
-  max-width: 1100px;
-  margin: 40px auto;
-  padding: 0 16px;
-}
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px;
-}
-h1 {
-  margin: 0 0 12px 0;
-  font-size: 22px;
-}
+.wrap { max-width: 1100px; margin: 40px auto; padding: 0 16px; }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+h1 { margin: 0 0 12px 0; font-size: 22px; }
+
+/* Form */
 .form {
   display: grid;
   grid-template-columns: 1.2fr 0.6fr auto;
   gap: 10px;
   align-items: center;
 }
-input,
-select,
-button,
-textarea {
-  font: inherit;
-}
-input,
-select {
+input, select, button, textarea { font: inherit; }
+input, select {
   background: #0c1628;
   border: 1px solid var(--border);
   color: var(--text);
@@ -55,9 +37,7 @@ select {
   border-radius: 10px;
   outline: none;
 }
-input::placeholder {
-  color: var(--muted);
-}
+input::placeholder { color: var(--muted); }
 button {
   border: 1px solid #223;
   background: linear-gradient(180deg, #1a273a, #152338);
@@ -66,9 +46,17 @@ button {
   border-radius: 10px;
   cursor: pointer;
 }
-button:hover {
-  border-color: #2a3b56;
+button:hover { border-color: #2a3b56; }
+
+.linkish {
+  background: transparent;
+  border: none;
+  padding: 10px 8px;
+  color: var(--accent2);
+  cursor: pointer;
 }
+
+/* Results grid */
 .results {
   margin-top: 18px;
   display: grid;
@@ -84,18 +72,11 @@ button:hover {
   flex-direction: column;
   gap: 8px;
 }
-.title {
-  font-weight: 600;
-}
-.meta {
-  color: var(--muted);
-  font-size: 12px;
-}
+.title { font-weight: 600; }
+.meta { color: var(--muted); font-size: 12px; }
 .tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 2px;
+  display: flex; flex-wrap: wrap;
+  gap: 6px; margin-top: 2px;
 }
 .tag {
   font-size: 11px;
@@ -105,76 +86,43 @@ button:hover {
   padding: 3px 8px;
   border-radius: 999px;
 }
-.row {
+
+/* Small layout helpers */
+.row { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.row > .left { display: flex; gap: 10px; align-items: center; }
+
+/* Ask bar (global input + button) */
+.askbar {
   display: flex;
   gap: 8px;
-  align-items: center;
-  justify-content: space-between;
-}
-.row > .left {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.askbox {
-  margin-top: 8px;
-  display: flex;
-  gap: 8px;
-}
-.askbox input {
-  flex: 1;
-}
-.empty,
-.error {
   margin-top: 14px;
-  padding: 12px;
-  border-radius: 12px;
 }
-.empty {
-  background: #0e1a2a;
-  border: 1px dashed #1f2c44;
-  color: #a7b7d1;
-}
-.error {
-  background: #2a1212;
-  border: 1px solid #3d1b1b;
-  color: #ffb4b4;
-}
-.spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid #335;
-  border-top-color: #aaf;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-.chat {
-  margin-top: 18px;
-}
-.msg {
-  display: flex;
-  margin-top: 10px;
-}
+.askbar input { flex: 1; }
+
+/* Chat */
+.chat { margin-top: 18px; }
+.turn { margin-top: 10px; }
+.msg { display: flex; }
 .msg .bubble {
   max-width: 70%;
   padding: 12px 14px;
+  margin-bottom: 10px;
   border-radius: 14px;
   border: 1px solid var(--border);
 }
-.user .bubble {
-  margin-left: auto;
-  background: #0f1a2d;
+.user .bubble { margin-left: auto; background: #0f1a2d; }
+.ai .bubble { margin-right: auto; background: var(--bubble); }
+.muted { color: var(--muted); }
+
+/* Empty + error */
+.empty, .error { margin-top: 14px; padding: 12px; border-radius: 12px; }
+.empty { background: #0e1a2a; border: 1px dashed #1f2c44; color: #a7b7d1; }
+.error { background: #2a1212; border: 1px solid #3d1b1b; color: #ffb4b4; }
+
+/* Spinner */
+.spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid #335; border-top-color: #aaf;
+  border-radius: 50%; animation: spin 0.8s linear infinite;
 }
-.ai .bubble {
-  margin-right: auto;
-  background: var(--bubble);
-}
-.muted {
-  color: var(--muted);
-}
+@keyframes spin { to { transform: rotate(360deg); } }

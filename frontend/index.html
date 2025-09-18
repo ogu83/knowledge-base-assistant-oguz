@@ -12,9 +12,12 @@
     <div id="app" class="wrap">
       <div class="panel">
         <h1>Knowledge Base Assistant</h1>
+
+        <!-- Search form -->
         <div class="form">
           <input
             v-model="query"
+            @keyup.enter="doSearch"
             type="text"
             placeholder="Search articles (e.g., PostgreSQL indexes, SQL joins)"
           />
@@ -28,28 +31,21 @@
           </button>
         </div>
 
+        <!-- Results grid with selectable cards -->
         <div class="results" v-if="results.length">
           <div class="card" v-for="r in results" :key="r.id">
-            <div class="title">{{ r.title }}</div>
-            <div class="meta">
-              {{ r.author_name }} • {{ r.category_name }} • {{ r.publish_date }}
+            <div class="row">
+              <div class="left">
+                <input type="checkbox" v-model="r.selected" />
+                <div class="title">{{ r.title }}</div>
+              </div>
+              <div class="meta">
+                {{ r.author_name }} • {{ r.category_name }} • {{ r.publish_date }}
+              </div>
             </div>
             <div class="excerpt">{{ r.excerpt }}...</div>
             <div class="tags">
-              <span v-for="t in tagList(r.tags)" :key="t" class="tag"
-                >{{ t }}</span
-              >
-            </div>
-            <div class="askbox">
-              <input
-                v-model="r.ask"
-                type="text"
-                :placeholder="`Ask about: ${r.title}`"
-              />
-              <button @click="askAI(r)" :disabled="r.loadingAsk">
-                <span v-if="r.loadingAsk" class="spinner"></span>
-                <span v-else>Ask AI</span>
-              </button>
+              <span v-for="t in tagList(r.tags)" :key="t" class="tag">{{ t }}</span>
             </div>
           </div>
         </div>
@@ -60,42 +56,73 @@
 
         <div v-if="error" class="error">{{ error }}</div>
 
+        <!-- Ask bar (single input + button for all selected results) -->
+        <div class="askbar" v-if="results.length">
+          <input
+            v-model="askText"
+            type="text"
+            placeholder="Ask the AI about the selected articles…"
+          />
+          <button
+            @click="askSelected"
+            :disabled="!hasSelection || loadingAskSelected"
+            title="Ask about selected results"
+          >
+            <span v-if="loadingAskSelected" class="spinner"></span>
+            <span v-else>Ask AI</span>
+          </button>
+          <button
+            class="linkish"
+            v-if="hasSelection"
+            @click="clearSelection"
+            :disabled="loadingAskSelected"
+            title="Clear selected"
+          >
+            Clear selection
+          </button>
+        </div>
+
+        <!-- Chat (separate from results; Q appears directly above A) -->
         <div class="chat" v-if="messages.length">
-          <div class="msg user" v-for="(m,i) in messages" :key="i*2">
-            <div class="bubble">
-              <div class="muted">You asked</div>
-              <div>{{ m.question }}</div>
+          <div class="turn" v-for="(m,i) in messages" :key="i">
+            <div class="msg user">
+              <div class="bubble">
+                <div class="muted">You asked</div>
+                <div>{{ m.question }}</div>
+              </div>
             </div>
-          </div>
-          <div class="msg ai" v-for="(m,i) in messages" :key="i*2+1">
-            <div class="bubble">
-              <div class="muted">Assistant</div>
-              <div style="white-space: pre-wrap">{{ m.answer }}</div>
-              <div class="muted" style="margin-top: 6px; font-size: 12px">
-                Sources: IDs {{ m.used_article_ids.join(', ') }}
+            <div class="msg ai">
+              <div class="bubble">
+                <div class="muted">Assistant</div>
+                <div style="white-space: pre-wrap">{{ m.answer }}</div>
+                <div class="muted" style="margin-top: 6px; font-size: 12px">
+                  Sources: IDs {{ m.used_article_ids.join(', ') }}
+                </div>
               </div>
             </div>
           </div>
         </div>
+
       </div>
     </div>
 
     <script>
-      const { createApp, reactive, toRefs } = Vue;
+      const { createApp, reactive, toRefs, computed } = Vue;
 
       createApp({
         setup() {
-          // --- Config ---
           const state = reactive({
             baseUrl: "http://localhost:8000", // adjust if backend runs elsewhere
             query: "",
             category: "",
-            categories: ["Python", "Databases", "Frontend", "DevOps", "LLMs"], // seed-aligned
+            categories: ["Python", "Databases", "Frontend", "DevOps", "LLMs"],
             results: [],
             loadingSearch: false,
             queryTouched: false,
             error: "",
             messages: [],
+            askText: "",
+            loadingAskSelected: false,
           });
 
           const tagList = (csv) =>
@@ -103,6 +130,14 @@
               .split(",")
               .map((s) => s.trim())
               .filter(Boolean);
+
+          const hasSelection = computed(() =>
+            state.results.some((r) => r.selected)
+          );
+
+          function clearSelection() {
+            state.results.forEach((r) => (r.selected = false));
+          }
 
           async function doSearch() {
             state.error = "";
@@ -112,16 +147,17 @@
             try {
               const params = new URLSearchParams({ query: state.query });
               if (state.category) params.set("category", state.category);
+
               const res = await fetch(
                 `${state.baseUrl}/api/search?` + params.toString()
               );
               if (!res.ok) throw new Error(`Search failed (${res.status})`);
               const json = await res.json();
-              // augment results with local fields for ask UX
+
+              // add selection flag per result
               state.results = (json.results || []).map((r) => ({
                 ...r,
-                ask: "",
-                loadingAsk: false,
+                selected: false,
               }));
             } catch (e) {
               state.error = e.message || "Search error.";
@@ -130,42 +166,58 @@
             }
           }
 
-          async function askAI(result) {
-            result.loadingAsk = true;
+          async function askSelected() {
             state.error = "";
+            state.loadingAskSelected = true;
             try {
-              // Use the per-card question if provided; otherwise a default
+              const context_ids = state.results
+                .filter((r) => r.selected)
+                .map((r) => r.id);
+
+              if (context_ids.length === 0) {
+                throw new Error("Select at least one result first.");
+              }
+
               const question =
-                result.ask && result.ask.trim()
-                  ? result.ask.trim()
-                  : `Tell me more about "${result.title}"`;
-              const payload = {
-                context_ids: [result.id],
-                question,
-              };
+                state.askText && state.askText.trim()
+                  ? state.askText.trim()
+                  : "Summarize the selected articles and key takeaways.";
+
               const res = await fetch(`${state.baseUrl}/api/ask`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
+                body: JSON.stringify({ context_ids, question }),
               });
               if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.detail || `Ask failed (${res.status})`);
               }
               const json = await res.json();
+
               state.messages.push({
                 question,
                 answer: json.answer,
                 used_article_ids: json.used_article_ids || [],
               });
+
+              // quality-of-life cleanups
+              state.askText = "";
+              clearSelection();
             } catch (e) {
               state.error = e.message || "Ask error.";
             } finally {
-              result.loadingAsk = false;
+              state.loadingAskSelected = false;
             }
           }
 
-          return { ...toRefs(state), doSearch, askAI, tagList };
+          return {
+            ...toRefs(state),
+            doSearch,
+            tagList,
+            askSelected,
+            clearSelection,
+            hasSelection,
+          };
         },
       }).mount("#app");
     </script>
