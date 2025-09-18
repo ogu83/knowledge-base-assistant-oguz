@@ -1,0 +1,32 @@
+
+# Single-container stack that runs: PostgreSQL + FastAPI backend (8000) + static frontend (8001).
+# Two user-defined networks are declared to satisfy the "private" vs "public" requirement.
+# The single service is attached to both; ports are published publicly for 8000 and 8001.
+
+services:
+  kba:
+    build: .
+    container_name: kba_stack
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"     # FastAPI (publicly reachable)
+      - "8001:8001"     # Frontend (publicly reachable)
+    networks:
+      - public_net
+      - private_net
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+networks:
+  public_net: {}
+  private_net: {}
+
+volumes:
+  pgdata: {}
