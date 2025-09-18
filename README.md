@@ -1,45 +1,18 @@
 # Knowledge Base Assistant
 ## Table of Contents
 
-1. [Knowledge Base Assistant – Backend](#knowledge-base-assistant-backend)
-  1.1. [Prerequisites](#prerequisites)
-  1.2. [Quick Start](#quick-start)
-    1.2.1. [1) Clone & enter the backend folder](#1-clone-enter-the-backend-folder)
-    1.2.2. [2) Create and activate a virtual environment](#2-create-and-activate-a-virtual-environment)
-    1.2.3. [3) Configure environment variables](#3-configure-environment-variables)
-    1.2.4. [4) Initialize the database (auto-create + schema + seed)](#4-initialize-the-database-auto-create-schema-seed)
-2. [Windows PowerShell or Linux/macOS (after activating venv)](#windows-powershell-or-linuxmacos-after-activating-venv)
-    2.1. [5) Run the API](#5-run-the-api)
-  2.1. [Project Structure](#project-structure)
-  2.2. [Troubleshooting](#troubleshooting)
-  2.3. [Indexing & Performance Gain for Database Queries](#indexing-performance-gain-for-database-queries)
-    2.3.1. [Search Performance & Indexing Notes](#search-performance-indexing-notes)
-    2.3.2. [How the benchmark was run](#how-the-benchmark-was-run)
-    2.3.3. [Results (example run)](#results-example-run)
-    2.3.4. [Indexes and why they help](#indexes-and-why-they-help)
-    2.3.5. [Short Demo Script](#short-demo-script)
-  2.4. [LLM Integration](#llm-integration)
-    2.4.1. [Configure your `.env`](#configure-your-env)
-    2.4.2. [Example: Ask the LLM](#example-ask-the-llm)
-3. [Knowledge Base Assistant – Frontend](#knowledge-base-assistant-frontend)
-  3.1. [Prerequisites](#prerequisites)
-  3.2. [Quick Start](#quick-start)
-    3.2.1. [1) Clone & enter the frontend folder](#1-clone-enter-the-frontend-folder)
-    3.2.2. [2) Run locally](#2-run-locally)
-4. [Example with Python’s simple HTTP server](#example-with-pythons-simple-http-server)
-5. [Then open http://localhost:8080/index.html](#then-open-httplocalhost8080indexhtml)
-    5.1. [3) Adjust backend URL if needed](#3-adjust-backend-url-if-needed)
-  5.1. [UI & UX Approach](#ui-ux-approach)
-  5.2. [Usage](#usage)
-  5.3. [Demo](#demo)
-  5.4. [Run with Docker](#run-with-docker)
-    5.4.1. [1) Build and start](#1-build-and-start)
-    5.4.2. [2) Configure environment](#2-configure-environment)
-    5.4.3. [3) Health checks](#3-health-checks)
-    5.4.4. [4) Stopping](#4-stopping)
+1. [Backend](#backend)
+1.1 [Indexing & Performance Gain for Database Queries](#indexing-and-performance-gain-for-database-queries)
+1.2 [Indexes and why they help](#indexes-and-why-they-help)
+1.3 [Short Demo Script](#short-demo-script)
+1.4 [LLM Integration](#llm-integration)
+2. [Frontend](#frontend)
+2.1 [UI & UX Approach](#ui-ux-approach)
+2.2 [Demo](#demo)
+3. [Run with Docker](#run-with-docker)
 
 ---
-# Knowledge Base Assistant – Backend
+# Backend
 
 FastAPI + PostgreSQL backend for the Intelligent Knowledge Base Assistant.
 
@@ -123,7 +96,7 @@ backend/
 - **File not found (schema.sql)**: Run `python init_db.py` from the `backend` directory so the relative `data/schema.sql` path resolves.
 - **Connection refused**: Verify host/port/credentials, and that PostgreSQL accepts connections from your machine.
 
-## Indexing & Performance Gain for Database Queries
+## Indexing and Performance Gain for Database Queries
 ### Search Performance & Indexing Notes
 
 This section summarizes the search performance of the `/api/search` endpoint **with** and **without** indexes, and explains each index used and why it helps.
@@ -355,7 +328,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 }
 ```
 
-# Knowledge Base Assistant – Frontend
+# Frontend
 
 Single-page UI built with **Vue 3 (CDN build)** and plain CSS. It connects to the FastAPI backend and provides a smooth interface for searching knowledge base articles and asking AI questions.
 
