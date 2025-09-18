@@ -331,5 +331,43 @@ I designed the UI to keep **searching, selecting, and asking questions** simple:
 I will include a short animated GIF here to illustrate the flow:
 ![Demo](doc/demo.gif)
 
-## Next Steps
-- Optionally add `docker-compose.yml` for Postgres + API.
+## Run with Docker
+
+Instead of setting up Python and PostgreSQL manually, you can run the full stack (Postgres + FastAPI backend + Vue frontend) using **Docker Compose**.
+
+### 1) Build and start
+From the repo root (where `docker-compose.yml` lives):
+```bash
+docker compose up --build
+```
+
+This will:
+- Initialize a PostgreSQL database (with schema + seed data).
+- Start the FastAPI backend on **http://localhost:8000**.
+- Serve the static frontend on **http://localhost:8001**.
+- Orchestrate all processes (Postgres, DB init, backend, frontend) under Supervisor.
+
+### 2) Configure environment
+Copy `.env.example` to `.env` in the repo root and adjust as needed:
+```bash
+PG_HOST=localhost
+PG_PORT=5432
+PG_USER=postgres
+PG_PASSWORD=postgres
+PG_DBNAME=KnowledgeBaseAssistant
+USE_INDEXES=true
+OPENAI_MODEL=gpt-3.5-turbo
+OPENAI_API_KEY=your_openai_api_key_here
+```
+These variables are used by the backend for database connections, schema initialization, and LLM integration.
+
+### 3) Health checks
+- **API health**: http://localhost:8000/health should return `{"status":"ok"}`
+- **Search**: http://localhost:8000/api/search?query=SQL
+- **Frontend UI**: http://localhost:8001 (connects to the backend at `localhost:8000`)
+
+### 4) Stopping
+```bash
+docker compose down
+```
+This stops and removes the container but keeps your database data in the named volume.
