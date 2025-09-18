@@ -1,3 +1,44 @@
+# Knowledge Base Assistant
+## Table of Contents
+
+1. [Knowledge Base Assistant – Backend](#knowledge-base-assistant-backend)
+  1.1. [Prerequisites](#prerequisites)
+  1.2. [Quick Start](#quick-start)
+    1.2.1. [1) Clone & enter the backend folder](#1-clone-enter-the-backend-folder)
+    1.2.2. [2) Create and activate a virtual environment](#2-create-and-activate-a-virtual-environment)
+    1.2.3. [3) Configure environment variables](#3-configure-environment-variables)
+    1.2.4. [4) Initialize the database (auto-create + schema + seed)](#4-initialize-the-database-auto-create-schema-seed)
+2. [Windows PowerShell or Linux/macOS (after activating venv)](#windows-powershell-or-linuxmacos-after-activating-venv)
+    2.1. [5) Run the API](#5-run-the-api)
+  2.1. [Project Structure](#project-structure)
+  2.2. [Troubleshooting](#troubleshooting)
+  2.3. [Indexing & Performance Gain for Database Queries](#indexing-performance-gain-for-database-queries)
+    2.3.1. [Search Performance & Indexing Notes](#search-performance-indexing-notes)
+    2.3.2. [How the benchmark was run](#how-the-benchmark-was-run)
+    2.3.3. [Results (example run)](#results-example-run)
+    2.3.4. [Indexes and why they help](#indexes-and-why-they-help)
+    2.3.5. [Short Demo Script](#short-demo-script)
+  2.4. [LLM Integration](#llm-integration)
+    2.4.1. [Configure your `.env`](#configure-your-env)
+    2.4.2. [Example: Ask the LLM](#example-ask-the-llm)
+3. [Knowledge Base Assistant – Frontend](#knowledge-base-assistant-frontend)
+  3.1. [Prerequisites](#prerequisites)
+  3.2. [Quick Start](#quick-start)
+    3.2.1. [1) Clone & enter the frontend folder](#1-clone-enter-the-frontend-folder)
+    3.2.2. [2) Run locally](#2-run-locally)
+4. [Example with Python’s simple HTTP server](#example-with-pythons-simple-http-server)
+5. [Then open http://localhost:8080/index.html](#then-open-httplocalhost8080indexhtml)
+    5.1. [3) Adjust backend URL if needed](#3-adjust-backend-url-if-needed)
+  5.1. [UI & UX Approach](#ui-ux-approach)
+  5.2. [Usage](#usage)
+  5.3. [Demo](#demo)
+  5.4. [Run with Docker](#run-with-docker)
+    5.4.1. [1) Build and start](#1-build-and-start)
+    5.4.2. [2) Configure environment](#2-configure-environment)
+    5.4.3. [3) Health checks](#3-health-checks)
+    5.4.4. [4) Stopping](#4-stopping)
+
+---
 # Knowledge Base Assistant – Backend
 
 FastAPI + PostgreSQL backend for the Intelligent Knowledge Base Assistant.
@@ -219,6 +260,61 @@ CREATE INDEX IF NOT EXISTS idx_articles_content_trgm
 - Substring queries like `ILIKE '%SQL%'` match “PostgreSQL”.
 - Trigram indexes make these substring searches fast (otherwise they require sequential scans).
 - Preserves recall identical to the baseline but with large performance gains.
+
+### Short Demo Script
+This script shows how to run complex searches (with query + category/tags) and then get an LLM answer grounded in selected results.
+
+#### Complex search query
+```http
+GET http://localhost:8000/api/search?query=python&category=DevOps&tags=indexes&limit=5
+```
+**Example Response**
+```json
+{
+  "results": [
+    {
+      "id": 8,
+      "title": "Typing in Python: When and Why",
+      "excerpt": "Typing in Python: When and Why\n\nThis article explores practical techniques...",
+      "publish_date": "2025-05-22",
+      "author_id": 4,
+      "author_name": "Linus Craft",
+      "author_bio": "Systems programmer exploring performance and tooling.",
+      "category_id": 4,
+      "category_name": "DevOps",
+      "tags": "indexes, ORM, rag, testing, vector",
+      "rank": 0.66871977
+    }
+  ],
+  "metrics": {
+    "db_ms": 72.66,
+    "total_ms": 72.66
+  }
+}
+```
+Then you can show how to use /api/ask with the returned id:
+```http
+POST http://localhost:8000/api/ask
+Content-Type: application/json
+
+{
+  "context_ids": [8],
+  "question": "What are the trade-offs of using typing in Python for DevOps codebases?"
+}
+```
+**Example LLM response**
+```json
+{
+  "answer": "Typing in Python can improve maintainability and tooling support in DevOps codebases, but it may add overhead when teams lack experience. The article 'Typing in Python: When and Why' notes that annotations help catch errors earlier and integrate better with IDEs, but they can slow rapid prototyping and require discipline to keep in sync with actual code.",
+  "used_article_ids": [8]
+}
+```
+
+#### Notes for Reviewers
+- Complexity knobs: You can mix free-text queries with category and tags (including exclusions) to stress the retrieval layer.
+- Grounded answers: /api/ask only uses the IDs you select, ensuring the model’s answer cites/reasons over the chosen results.
+- UI/UX: The chat bubble for the LLM answer appears directly under your question; results are selectable via checkboxes before asking.
+- Error handling: The UI shows “No results found” and loading spinners; the API returns 400 for malformed queries.
 
 ## LLM Integration
 
