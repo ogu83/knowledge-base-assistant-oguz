@@ -7,7 +7,7 @@
 1.3 [Short Demo Script](#short-demo-script)
 1.4 [LLM Integration](#llm-integration)
 2. [Frontend](#frontend)
-2.1 [UI & UX Approach](#ui-ux-approach)
+2.1 [UI and UX Approach](#ui-and-ux-approach)
 2.2 [Demo](#demo)
 3. [Run with Docker](#run-with-docker)
 
@@ -360,7 +360,7 @@ baseUrl: "http://localhost:8000"
 ```
 to match your backend port/host.
 
-## UI & UX Approach
+## UI and UX Approach
 
 I designed the UI to keep **searching, selecting, and asking questions** simple:
 
