@@ -1,4 +1,3 @@
-
 """
 llm.py - Minimal OpenAI integration for Knowledge Base Assistant.
 

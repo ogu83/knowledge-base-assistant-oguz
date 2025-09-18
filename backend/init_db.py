@@ -1,4 +1,3 @@
-
 """
 Initialize and seed the PostgreSQL database for the Knowledge Base Assistant.
 

@@ -1,4 +1,3 @@
-
 """
 Database connection and utilities for Knowledge Base Assistant.
 Uses PostgreSQL with full-text search (tsvector) and GIN index.
@@ -13,7 +12,6 @@ PG_USER = os.getenv("PG_USER", "postgres")
 PG_PASSWORD = os.getenv("PG_PASSWORD", "Postgres2839*")
 PG_DBNAME = os.getenv("PG_DBNAME", "KnowledgeBaseAssistant")
 USE_INDEXES = os.getenv("USE_INDEXES", "false").lower() == "true"
-
 
 import psycopg2
 from psycopg2.extras import RealDictCursor

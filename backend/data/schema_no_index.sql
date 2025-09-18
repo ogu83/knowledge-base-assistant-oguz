@@ -1,4 +1,3 @@
-
 -- Schema for Knowledge Base Assistant (PostgreSQL)
 
 CREATE TABLE IF NOT EXISTS authors (
