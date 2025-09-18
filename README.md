@@ -259,5 +259,77 @@ OPENAI_API_KEY=your_openai_api_key_here
 }
 ```
 
+# Knowledge Base Assistant – Frontend
+
+Single-page UI built with **Vue 3 (CDN build)** and plain CSS. It connects to the FastAPI backend and provides a smooth interface for searching knowledge base articles and asking AI questions.
+
+## Prerequisites
+- A modern web browser (Chrome, Firefox, Edge, Safari).
+- Backend API running locally (default `http://localhost:8000` as in [backend README]).
+
+## Quick Start
+
+### 1) Clone & enter the frontend folder
+```bash
+cd knowledge-base-assistant-oguz/frontend
+```
+
+### 2) Run locally
+Just open `index.html` in your browser. No build step required since Vue is loaded via CDN.
+
+If you want hot reload or static serving:
+```bash
+# Example with Python’s simple HTTP server
+python -m http.server 8080
+# Then open http://localhost:8080/index.html
+```
+
+### 3) Adjust backend URL if needed
+In `index.html`, update:
+```js
+baseUrl: "http://localhost:8000"
+```
+to match your backend port/host.
+
+## UI & UX Approach
+
+I designed the UI to keep **searching, selecting, and asking questions** simple:
+
+1. **Search Bar**  
+   - Enter a keyword and optionally choose a category.  
+   - Results are fetched asynchronously without blocking the UI.
+
+2. **Search Results as Cards**  
+   - Each article appears as a card with title, author, date, excerpt, and tags.  
+   - Each card includes a **checkbox** so multiple articles can be selected at once.
+
+3. **Ask AI Workflow**  
+   - Instead of typing per-result questions, you select relevant articles first.  
+   - At the bottom, there is a single **Ask AI input + button**.  
+   - When you ask, all selected article IDs are sent to the backend in the `context_ids` array.  
+   - This encourages **focused, context-driven queries** rather than scattered prompts.
+
+4. **Chat Bubble Layout**  
+   - Questions and answers are rendered in conversational “turns.”  
+   - Each **user question bubble** is directly followed by the **AI’s answer bubble**.  
+   - This keeps dialogue clear and avoids mixing with search results.
+
+5. **Visual Design**  
+   - Dark theme with card-based layout.  
+   - Tags and metadata are shown in muted tones for readability.  
+   - Spinners indicate loading states to improve perceived responsiveness.
+
+## Usage
+
+1. **Search** – Type in keywords (e.g., `PostgreSQL indexes`) and hit *Enter* or click *Search*.  
+2. **Select** – Check the boxes next to articles you want to use as context.  
+3. **Ask AI** – Enter your question in the ask bar and click *Ask AI*.  
+4. **Read** – See the AI’s response appear directly under your question in the chat section.  
+5. **Iterate** – Repeat search and questions as needed; the chat keeps history of your Q&A turns.
+
+## Demo
+I will include a short animated GIF here to illustrate the flow:
+![Demo](doc/demo.gif)
+
 ## Next Steps
 - Optionally add `docker-compose.yml` for Postgres + API.
